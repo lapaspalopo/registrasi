@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Tracking System Pro - Responsive</title>
+    
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.2/papaparse.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet">
+
+    <style>
+        * { box-sizing: border-box; font-family: 'Poppins', sans-serif; }
+        
+        body { 
+            background: #eef2f7; 
+            display: flex; 
+            justify-content: center; 
+            align-items: flex-start; /* Mengubah center ke flex-start agar tidak terpotong di layar pendek */
+            padding: 20px; 
+            margin: 0; 
+            min-height: 100vh;
+        }
+        
+        .box { 
+            background: white; 
+            width: 100%; 
+            max-width: 500px; /* Sedikit lebih lebar untuk tablet */
+            padding: 25px; 
+            border-radius: 20px; 
+            box-shadow: 0 15px 35px rgba(0,0,0,0.07); 
+            text-align: center;
+            margin-top: 20px;
+        }
+
+        .logo-header {
+            width: 70px; /* Sedikit lebih kecil agar proporsional di HP */
+            height: auto;
+            margin-bottom: 15px;
+            object-fit: contain;
+        }
+
+        .title h2 { 
+            font-size: 1.25rem; /* Menggunakan rem agar skalabel */
+            color: #1a365d; 
+            margin: 0; 
+        }
+        
+        .title p { 
+            font-size: 0.85rem; 
+            color: #718096; 
+            margin-top: 5px; 
+            margin-bottom: 25px;
+        }
+        
+        /* SEARCH AREA RESPONSIVE */
+        .search-area { 
+            display: flex; 
+            flex-direction: row; /* Default baris */
+            gap: 10px; 
+            margin-bottom: 25px; 
+        }
+
+        input { 
+            flex: 1; 
+            padding: 12px 15px; 
+            border: 2px solid #e2e8f0; 
+            border-radius: 12px; 
+            font-size: 16px; /* Mencegah auto-zoom di iOS Safari */
+            outline: none;
+            text-align: left;
+            width: 100%;
+        }
+        
+        button { 
+            background: #3182ce; 
+            color: white; 
+            border: none; 
+            padding: 12px 20px; 
+            border-radius: 12px; 
+            font-weight: 600; 
+            cursor: pointer;
+            transition: 0.3s;
+            white-space: nowrap;
+        }
+
+        /* DISPLAY AREA */
+        #displayArea { display: none; animation: fadeIn 0.5s ease-in-out; text-align: left; }
+        
+        .name-card { 
+            background: #f0f7ff; 
+            padding: 15px; 
+            border-radius: 12px; 
+            border-left: 5px solid #3182ce;
+            margin-bottom: 20px;
+        }
+
+        .step-container { position: relative; padding-left: 35px; margin-top: 10px; }
+        .step-container::before {
+            content: ''; position: absolute; left: 12px; top: 0; bottom: 0;
+            width: 2px; background: #cbd5e0;
+        }
+
+        .step-item { position: relative; margin-bottom: 20px; }
+        .step-circle {
+            position: absolute; left: -31px; top: 2px;
+            width: 20px; height: 20px; background: #48bb78;
+            border-radius: 50%; border: 3px solid white; box-shadow: 0 0 0 1px #cbd5e0;
+        }
+
+        .step-label { font-size: 11px; color: #718096; font-weight: bold; text-transform: uppercase; }
+        .step-text { color: #2d3748; font-weight: 600; font-size: 0.95rem; display: block; }
+
+        /* LOADING & ERROR */
+        .error { color: #e53e3e; text-align: center; display: none; font-size: 0.85rem; padding: 10px; background: #fff5f5; border-radius: 8px; }
+        .loading { text-align: center; display: none; color: #3182ce; font-size: 0.9rem; margin-bottom: 10px; }
+
+        /* MEDIA QUERIES UNTUK HANDPHONE KECIL */
+        @media (max-width: 480px) {
+            body { padding: 10px; }
+            .box { padding: 20px; }
+            .search-area { flex-direction: column; } /* Tombol pindah ke bawah input di HP */
+            button { width: 100%; }
+            .logo-header { width: 60px; }
+        }
+
+        /* ANIMASI */
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
+    </style>
+</head>
+<body>
+
+<div class="box">
+    <img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRM-uiF7K2D8aOSCgN3TWsdUbIzmbiYQKiuyQ&s" alt="Logo" class="logo-header">
+
+    <div class="title">
+        <h2>Lacak Registrasi</h2>
+        <p>Masukkan nomor registrasi anda di bawah</p>
+    </div>
+
+    <div class="search-area">
+        <input type="text" id="trackInput" placeholder="Masukkan Nomor..." inputmode="text">
+        <button onclick="prosesCari()">Cari</button>
+    </div>
+
+    <div id="statusLoading" class="loading">Memuat data...</div>
+    <div id="statusError" class="error">Data tidak ditemukan. Periksa kembali nomor anda.</div>
+
+    <div id="displayArea">
+        <div class="name-card">
+            <span style="font-size:10px; color:#2b6cb0; font-weight:bold; letter-spacing:1px;">NAMA WARGA BINAAN:</span>
+            <div id="outNama" style="font-weight:bold; font-size:1.1rem; color:#1a365d;"></div>
+        </div>
+
+        <div class="step-container">
+            <div class="step-item">
+                <div class="step-circle"></div>
+                <span class="step-label">Tahapan 1</span>
+                <span class="step-text" id="outT1"></span>
+            </div>
+            <div class="step-item">
+                <div class="step-circle"></div>
+                <span class="step-label">Tahapan 2</span>
+                <span class="step-text" id="outT2"></span>
+            </div>
+            <div class="step-item">
+                <div class="step-circle"></div>
+                <span class="step-label">Tahapan 3</span>
+                <span class="step-text" id="outT3"></span>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    function prosesCari() {
+        const inputVal = document.getElementById('trackInput').value.trim();
+        const display = document.getElementById('displayArea');
+        const error = document.getElementById('statusError');
+        const loader = document.getElementById('statusLoading');
+
+        if (!inputVal) return;
+
+        display.style.display = 'none';
+        error.style.display = 'none';
+        loader.style.display = 'block';
+
+        const rawUrl = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQ3azr3nS1IKyiKy39UWfqn2oZgWRgCpWRnyFvxTEoQV2lJU45DC3qYpaSKBXwcvzTzddkAMciCY307/pub?output=csv';
+        const proxyUrl = 'https://api.allorigins.win/raw?url=' + encodeURIComponent(rawUrl);
+
+        Papa.parse(proxyUrl, {
+            download: true,
+            skipEmptyLines: true,
+            complete: function(results) {
+                loader.style.display = 'none';
+                const data = results.data;
+                
+                const match = data.find(row => 
+                    row.some(cell => cell.toString().toLowerCase().trim() === inputVal.toLowerCase())
+                );
+
+                if (match) {
+                    // Penyesuaian Index berdasarkan urutan kolom: No(0), Reg(1), Nama(2), T1(3), T2(4), T3(5)
+                    document.getElementById('outNama').innerText = match[1] || 'Tanpa Nama';
+                    document.getElementById('outT1').innerText = match[2] || '-';
+                    document.getElementById('outT2').innerText = match[3] || '-';
+                    document.getElementById('outT3').innerText = match[4] || '-';
+
+                    display.style.display = 'block';
+                } else {
+                    error.style.display = 'block';
+                }
+            },
+            error: function() {
+                loader.style.display = 'none';
+                error.innerText = "Gangguan koneksi. Silakan coba lagi.";
+                error.style.display = 'block';
+            }
+        });
+    }
+</script>
+
+</body>
+</html>
